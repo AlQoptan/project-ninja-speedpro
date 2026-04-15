@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم سبيد برو - مجدي صالح</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        :root { --ninja-dark: #121420; --ninja-accent: #d90429; --ninja-light: #edf2f4; }
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; min-height: 100vh; }
+        
+        .container-fluid { padding-left: 2%; padding-right: 2%; }
+        
+        #loginPage { height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--ninja-dark) 0%, #2b2d42 100%); }
+        .login-card { background: white; padding: 40px; border-radius: 25px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); width: 100%; max-width: 420px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        .login-logo { width: 160px; height: auto; margin-bottom: 25px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); background: #fff; padding: 10px; }
+        .contact-info { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #6c757d; }
+        
+        #mainDashboard { display: none; }
+        .top-banner { background: linear-gradient(135deg, var(--ninja-dark) 0%, #1a1c2c 100%); color: white; padding: 25px 0; border-bottom: 5px solid var(--ninja-accent); }
+        .user-name { font-size: 2.2rem; font-weight: 800; }
+        
+        .stat-card { color: white; border-radius: 18px; padding: 25px; text-align: center; transition: 0.3s; }
+        .stat-card:hover { transform: translateY(-8px); }
+        .bg-gradient-red { background: linear-gradient(45deg, #d90429, #ef233c); }
+        
+        .status-badge { padding: 10px 20px; border-radius: 50px; font-weight: bold; min-width: 130px; display: inline-block; box-shadow: 0 4px 8px rgba(0,0,0,0.1); color: white !important; }
+        .bg-available { background-color: #2b9348 !important; } 
+        .bg-in-use { background-color: #d00000 !important; }   
+        
+        .btn-custom { border-radius: 10px; font-weight: 700; padding: 10px 18px; }
+        .filter-btn { border-radius: 25px; padding: 8px 30px; font-weight: 700; font-size: 1.1rem;}
+        
+        .table { font-size: 1.05rem; }
+        .table th { padding: 15px; font-size: 1.1rem; background-color: #212529; color: white; }
+        .table td { padding: 12px; vertical-align: middle; border-bottom: 1px solid #dee2e6; }
+        .note-text { max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline-block; color: #6f42c1; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<div id="loginPage">
+    <div class="login-card">
+        <img src="image_7f93ae.jpg" alt="Speed Pro Logo" class="login-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/709/709699.png';">
+        <h3 class="fw-bold mb-1 text-dark">سبيد برو - SPEED PRO</h3>
+        <p class="text-muted small mb-4">نظام إدارة العمليات اللوجستية</p>
+        
+        <div class="input-group mb-3 text-start">
+            <span class="input-group-text"><i class="bi bi-person-circle"></i></span>
+            <input type="text" id="username" class="form-control" placeholder="اسم المستخدم">
+        </div>
+        
+        <div class="input-group mb-3 text-start">
+            <span class="input-group-text"><i class="bi bi-shield-lock-fill"></i></span>
+            <input type="password" id="password" class="form-control" placeholder="كلمة المرور">
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4 px-1">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="rememberMe">
+                <label class="form-check-label small fw-bold" for="rememberMe">تذكرني على هذا الجهاز</label>
+            </div>
+        </div>
+        
+        <button onclick="checkLogin()" class="btn btn-danger w-100 py-2 fw-bold fs-5 shadow-lg">دخول النظام <i class="bi bi-lightning-fill"></i></button>
+        <div id="loginError" class="text-danger mt-3 small fw-bold" style="display:none;"><i class="bi bi-x-circle"></i> بيانات الدخول غير صحيحة!</div>
+        
+        <div class="contact-info">
+            <p class="mb-1 fw-bold">مجدي صالح - الإدارة العامة</p>
+            <span class="fs-5 fw-bold text-dark" dir="ltr"><i class="bi bi-whatsapp text-success"></i> 0545971569</span>
+        </div>
+    </div>
+</div>
+
+<div id="mainDashboard">
+    <div class="top-banner">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div>
+                    <div class="small text-warning mb-1 fs-5">لوحة تحكم سبيد برو نينجا <span class="badge bg-warning text-dark px-2 ms-2" id="currentMonthBadge"></span></div>
+                    <div class="user-name">مجدي صالح 👑</div>
+                </div>
+                <div class="d-flex gap-2 flex-wrap mt-3">
+                    <button onclick="downloadPerfTemplate()" class="btn btn-outline-light"><i class="bi bi-download"></i> نموذج أداء</button>
+                    <button onclick="downloadDriverTemplate()" class="btn btn-outline-light"><i class="bi bi-download"></i> نموذج مستخدمين</button>
+                    <button onclick="openAddModal()" class="btn btn-success btn-custom"><i class="bi bi-plus-circle"></i> إضافة يدوي</button>
+                    <button onclick="document.getElementById('perfImport').click()" class="btn btn-info btn-custom text-dark"><i class="bi bi-graph-up-arrow"></i> استيراد أداء</button>
+                    <button onclick="document.getElementById('driverImport').click()" class="btn btn-warning btn-custom text-dark"><i class="bi bi-people-fill"></i> استيراد مستخدمين</button>
+                    <button onclick="logout()" class="btn btn-outline-danger text-white px-4 fw-bold">خروج <i class="bi bi-box-arrow-right"></i></button>
+                    <input type="file" id="perfImport" style="display:none;" onchange="importPerformance(event)">
+                    <input type="file" id="driverImport" style="display:none;" onchange="importDriversOnly(event)">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid mt-4">
+        <div class="row g-4 mb-4 text-center">
+            <div class="col-6 col-md-3"><div class="stat-card bg-dark shadow"><h5>إجمالي المحفظة</h5><h2 id="statTotal" class="display-4 fw-bold">0</h2></div></div>
+            <div class="col-6 col-md-3"><div class="stat-card bg-success shadow"><h5>متاح الآن</h5><h2 id="statAvailable" class="display-4 fw-bold">0</h2></div></div>
+            <div class="col-6 col-md-3"><div class="stat-card bg-danger shadow"><h5>قيد الاستخدام</h5><h2 id="statUsed" class="display-4 fw-bold">0</h2></div></div>
+            <div class="col-6 col-md-3"><div class="stat-card bg-gradient-red shadow"><h5>إجمالي الطلبات</h5><h2 id="allOrders" class="display-4 fw-bold">0</h2></div></div>
+        </div>
+
+        <div class="bg-white p-4 rounded-4 shadow-sm border mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+                <div class="input-group w-auto flex-grow-1" style="max-width: 600px;">
+                    <span class="input-group-text bg-white fs-5"><i class="bi bi-search"></i></span>
+                    <input type="text" id="searchInput" onkeyup="filterAccounts()" class="form-control border-start-0 ps-0 fs-5 p-2" placeholder="ابحث بالاسم، اليوزر، الجوال أو الملاحظة...">
+                </div>
+                <div class="btn-group shadow-sm">
+                    <button class="btn btn-outline-secondary filter-btn active" onclick="setFilter('all', this)">الكل</button>
+                    <button class="btn btn-outline-success filter-btn" onclick="setFilter('متاح', this)">المتاح</button>
+                    <button class="btn btn-outline-danger filter-btn" onclick="setFilter('قيد الاستخدام', this)">قيد الاستخدام</button>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-hover align-middle text-center">
+                    <thead>
+                        <tr>
+                            <th>اليوزر والاسم</th>
+                            <th>الحالة</th>
+                            <th>المستخدم الفعلي</th>
+                            <th>رقم الجوال</th>
+                            <th>أداء اليوم</th>
+                            <th>إجمالي الشهر</th>
+                            <th>المدة</th>
+                            <th>الملاحظات</th>
+                            <th>الأدوات 👑</th>
+                        </tr>
+                    </thead>
+                    <tbody id="accountsTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="formModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header bg-dark text-white"><h5 id="modalTitle" class="fw-bold fs-4">إدارة بيانات الحساب</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body bg-light p-4 fs-5">
+          <div class="card border-0 shadow-sm p-4">
+              <input type="hidden" id="formId">
+              <div class="row mb-3">
+                  <div class="col-md-6"><label class="fw-bold small text-muted">رقم اليوزر (ID)</label><input type="number" id="fieldId" class="form-control form-control-lg fw-bold"></div>
+                  <div class="col-md-6"><label class="fw-bold small text-muted">المالك الأساسي</label><input type="text" id="fieldName" class="form-control form-control-lg"></div>
+              </div>
+              <div class="row mb-3">
+                  <div class="col-md-6"><label class="fw-bold small text-muted">المستخدم الفعلي</label><input type="text" id="fieldActual" class="form-control form-control-lg text-primary fw-bold"></div>
+                  <div class="col-md-6"><label class="fw-bold small text-muted">رقم الجوال</label><input type="text" id="fieldPhone" class="form-control form-control-lg" dir="ltr"></div>
+              </div>
+              <div class="row mb-3">
+                  <div class="col-md-6">
+                    <label class="fw-bold small text-muted">تاريخ الاستلام (تلقائي / أو عدله يدوي)</label>
+                    <input type="date" id="fieldDate" class="form-control form-control-lg">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="fw-bold small text-muted">حالة الحساب</label>
+                    <select id="fieldStatus" class="form-select form-select-lg fw-bold">
+                        <option value="متاح">متاح</option>
+                        <option value="قيد الاستخدام">قيد الاستخدام</option>
+                    </select>
+                  </div>
+              </div>
+              <div class="mb-3">
+                  <label class="fw-bold small text-muted">ملاحظات إضافية</label>
+                  <textarea id="fieldNotes" class="form-control" rows="2" placeholder="اكتب ملاحظاتك هنا..."></textarea>
+              </div>
+              <div class="row border-top pt-3 text-center">
+                  <div class="col-6"><label class="small fw-bold">طلبات اليوم</label><input type="number" id="fieldDaily" class="form-control form-control-lg"></div>
+                  <div class="col-6"><label class="small fw-bold">التراكمي</label><input type="number" id="fieldTotal" class="form-control form-control-lg"></div>
+              </div>
+          </div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-secondary px-4 fs-5" data-bs-dismiss="modal">إلغاء</button><button onclick="saveFormData()" class="btn btn-danger px-5 fw-bold fs-5">حفظ البيانات ✅</button></div>
+      </div>
+    </div>
+</div>
+
+<div class="modal fade" id="auditModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-info text-dark"><h5 class="fw-bold mb-0 fs-4">سجل تتبع المستخدمين</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body p-0"><table class="table table-striped text-center align-middle mb-0 fs-5"><thead class="table-light"><tr><th>المندوب</th><th>البداية (ميلادي)</th><th>النهاية (ميلادي)</th><th>المدة</th></tr></thead><tbody id="auditTableBody"></tbody></table></div>
+    </div>
+  </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyA17LFPoegXWF7BJKLq3vQVtyU-CI0reqs",
+        authDomain: "ninja-system-30301.firebaseapp.com",
+        databaseURL: "https://ninja-system-30301-default-rtdb.firebaseio.com",
+        projectId: "ninja-system-30301",
+        storageBucket: "ninja-system-30301.firebasestorage.app",
+        messagingSenderId: "629876481196",
+        appId: "1:629876481196:web:4bc835539417cad7a15309",
+        measurementId: "G-LCJ9PQQKZH"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    let accounts = [], logs = [], currentFilter = 'all';
+    let fModal, aModal;
+
+    window.onload = function() {
+        fModal = new bootstrap.Modal(document.getElementById('formModal'));
+        aModal = new bootstrap.Modal(document.getElementById('auditModal'));
+        const savedUser = localStorage.getItem('ninja_user');
+        const savedPass = localStorage.getItem('ninja_pass');
+        if(savedUser && savedPass) {
+            document.getElementById('username').value = savedUser;
+            document.getElementById('password').value = savedPass;
+            document.getElementById('rememberMe').checked = true;
+        }
+    };
+
+    function checkLogin() {
+        const user = document.getElementById('username').value.trim().toLowerCase();
+        const pass = document.getElementById('password').value.trim();
+        if(user === 'admin' && pass === 'ninja2026') {
+            if(document.getElementById('rememberMe').checked) {
+                localStorage.setItem('ninja_user', user); localStorage.setItem('ninja_pass', pass);
+            } else {
+                localStorage.removeItem('ninja_user'); localStorage.removeItem('ninja_pass');
+            }
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('mainDashboard').style.display = 'block';
+            loadData();
+        } else { document.getElementById('loginError').style.display = 'block'; }
+    }
+
+    document.addEventListener("keypress", function(event) {
+        if (event.key === "Enter" && document.getElementById('loginPage').style.display !== 'none') { checkLogin(); }
+    });
+
+    function loadData() {
+        document.getElementById('currentMonthBadge').innerText = new Date().toLocaleString('ar-EG', { month: 'long', year: 'numeric' });
+        database.ref('ninja_data').on('value', (snap) => {
+            const data = snap.val();
+            if (data) { accounts = data.accounts || []; logs = data.logs || []; }
+            refreshUI();
+        });
+    }
+
+    function refreshUI() {
+        const tbody = document.getElementById('accountsTableBody');
+        tbody.innerHTML = ''; let totalO = 0;
+        accounts.forEach(acc => {
+            let isUsed = acc.status === 'قيد الاستخدام' || acc.status === 'مصروف';
+            if (currentFilter === 'متاح' && isUsed) return;
+            if (currentFilter === 'قيد الاستخدام' && !isUsed) return;
+
+            let days = isUsed ? calculateDays(acc.dispatchDate) : (acc.totalDays || 0);
+            totalO += (Number(acc.totalOrders) || 0);
+
+            tbody.innerHTML += `<tr>
+                <td><b class="fs-5">${acc.ownerName}</b><br><span class="badge bg-secondary fs-6 mt-1">#${acc.id}</span></td>
+                <td><span class="status-badge ${isUsed ? 'bg-in-use' : 'bg-available'}">${isUsed ? 'قيد الاستخدام' : 'متاح'}</span></td>
+                <td><b class="text-primary fs-5">${acc.actualUserName || '-'}</b></td>
+                <td><b class="text-muted fs-5" dir="ltr">${acc.phone || '-'}</b></td>
+                <td><span class="badge bg-light text-dark border fs-5">+${acc.dailyOrders || 0}</span></td>
+                <td><b class="text-danger fs-4">${acc.totalOrders || 0}</b></td>
+                <td><span class="fw-bold fs-5">${days} يوم</span></td>
+                <td><span class="note-text" title="${acc.notes || ''}">${acc.notes || '-'}</span></td>
+                <td>
+                    <button onclick="viewAudit('${acc.id}')" class="btn btn-info text-white fs-5" title="تتبع"><i class="bi bi-eye-fill"></i></button>
+                    <button onclick="openEditModal('${acc.id}')" class="btn btn-warning text-dark fs-5 mx-1" title="تعديل"><i class="bi bi-pencil-fill"></i></button>
+                    <button onclick="deleteAccount('${acc.id}')" class="btn btn-danger fs-5" title="حذف"><i class="bi bi-trash-fill"></i></button>
+                </td>
+            </tr>`;
+        });
+        document.getElementById('statTotal').innerText = accounts.length;
+        document.getElementById('statAvailable').innerText = accounts.filter(a => a.status !== 'قيد الاستخدام' && a.status !== 'مصروف').length;
+        document.getElementById('statUsed').innerText = accounts.filter(a => a.status === 'قيد الاستخدام' || a.status === 'مصروف').length;
+        document.getElementById('allOrders').innerText = totalO.toLocaleString();
+    }
+
+    function setFilter(status, btn) {
+        currentFilter = status;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active'); refreshUI();
+    }
+
+    function filterAccounts() {
+        let val = document.getElementById('searchInput').value.toLowerCase();
+        let rows = document.querySelectorAll('#accountsTableBody tr');
+        rows.forEach(r => r.style.display = r.innerText.toLowerCase().includes(val) ? '' : 'none');
+    }
+
+    function calculateDays(start) { 
+        if (!start) return 0; 
+        return Math.floor(Math.abs(new Date() - new Date(start)) / 86400000); 
+    }
+
+    function openEditModal(id) {
+        const acc = accounts.find(a => a.id == id);
+        let isUsed = acc.status === 'قيد الاستخدام' || acc.status === 'مصروف';
+        document.getElementById('formId').value = acc.id;
+        document.getElementById('fieldId').value = acc.id; document.getElementById('fieldId').readOnly = true;
+        document.getElementById('fieldName').value = acc.ownerName;
+        document.getElementById('fieldActual').value = acc.actualUserName;
+        document.getElementById('fieldPhone').value = acc.phone || '';
+        document.getElementById('fieldStatus').value = isUsed ? 'قيد الاستخدام' : 'متاح';
+        document.getElementById('fieldDate').value = acc.dispatchDate || ''; 
+        document.getElementById('fieldNotes').value = acc.notes || '';
+        document.getElementById('fieldDaily').value = acc.dailyOrders || 0;
+        document.getElementById('fieldTotal').value = acc.totalOrders || 0;
+        fModal.show();
+    }
+
+    function saveFormData() {
+        const oldId = document.getElementById('formId').value;
+        const newId = document.getElementById('fieldId').value;
+        const newDriver = document.getElementById('fieldActual').value;
+        const newStatus = document.getElementById('fieldStatus').value;
+        let newDate = document.getElementById('fieldDate').value; 
+
+        if(!newId) return alert("أدخل رقم اليوزر!");
+
+        let finalDate = null;
+        if (newStatus === 'قيد الاستخدام') {
+            if (newDate) {
+                finalDate = newDate; 
+            } else {
+                if (oldId) {
+                    const idx = accounts.findIndex(a => a.id == oldId);
+                    if (accounts[idx].status === 'قيد الاستخدام' || accounts[idx].status === 'مصروف') {
+                        finalDate = accounts[idx].dispatchDate;
+                    } else {
+                        finalDate = new Date().toLocaleDateString('en-CA');
+                    }
+                } else {
+                    finalDate = new Date().toLocaleDateString('en-CA');
+                }
+            }
+        }
+
+        let accData = {
+            id: newId, ownerName: document.getElementById('fieldName').value,
+            actualUserName: newDriver || '-', phone: document.getElementById('fieldPhone').value || '-',
+            status: newStatus, dailyOrders: Number(document.getElementById('fieldDaily').value),
+            totalOrders: Number(document.getElementById('fieldTotal').value),
+            notes: document.getElementById('fieldNotes').value,
+            dispatchDate: finalDate, totalDays: 0 
+        };
+
+        if(oldId) {
+            const idx = accounts.findIndex(a => a.id == oldId);
+            accData.totalDays = accounts[idx].totalDays || 0;
+            if(accounts[idx].actualUserName !== newDriver && accounts[idx].actualUserName !== '-') {
+                logs.unshift({ id: oldId, driver: accounts[idx].actualUserName, startDate: accounts[idx].dispatchDate, endDate: new Date().toLocaleDateString('en-CA'), duration: calculateDays(accounts[idx].dispatchDate) });
+            }
+            accounts[idx] = accData;
+        } else { accounts.push(accData); }
+        saveToCloud(); fModal.hide();
+    }
+
+    function openAddModal() {
+        document.getElementById('formId').value = ""; document.getElementById('fieldId').value = ""; document.getElementById('fieldId').readOnly = false;
+        document.getElementById('fieldName').value = ""; document.getElementById('fieldActual').value = "-";
+        document.getElementById('fieldPhone').value = ""; document.getElementById('fieldDate').value = ""; 
+        document.getElementById('fieldNotes').value = ""; document.getElementById('fieldStatus').value = "متاح";
+        document.getElementById('fieldDaily').value = 0; document.getElementById('fieldTotal').value = 0;
+        fModal.show();
+    }
+
+    function importDriversOnly(event) {
+        handleExcel(event, (row, idx) => {
+            let drv = row['المستخدم الفعلي'];
+            if (drv && drv !== '-' && drv.trim() !== '') {
+                if(accounts[idx].actualUserName !== '-' && accounts[idx].actualUserName !== drv) {
+                    logs.unshift({ id: accounts[idx].id, driver: accounts[idx].actualUserName, startDate: accounts[idx].dispatchDate, endDate: new Date().toLocaleDateString('en-CA'), duration: calculateDays(accounts[idx].dispatchDate) });
+                }
+                accounts[idx].dispatchDate = new Date().toLocaleDateString('en-CA');
+                accounts[idx].actualUserName = drv; accounts[idx].status = 'قيد الاستخدام';
+            }
+        });
+    }
+
+    function handleExcel(event, callback) {
+        const file = event.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+            jsonData.forEach(row => {
+                const idx = accounts.findIndex(a => a.id == (row['رقم اليوزر'] || row['ID']));
+                if (idx !== -1) callback(row, idx);
+            });
+            saveToCloud(); alert("تم التحديث بنجاح!");
+        };
+        reader.readAsArrayBuffer(file);
+        event.target.value = '';
+    }
+
+    function importPerformance(event) { handleExcel(event, (row, idx) => {
+        let d = Number(row['عدد طلبات اليوم'] || row['طلبات اليوم']) || 0;
+        accounts[idx].dailyOrders = d; accounts[idx].totalOrders = (Number(accounts[idx].totalOrders) || 0) + d;
+    }); }
+
+    function saveToCloud() { database.ref('ninja_data').set({ accounts, logs }); }
+    function logout() { location.reload(); }
+    
+    function viewAudit(id) {
+        const tbody = document.getElementById('auditTableBody'); tbody.innerHTML = '';
+        const history = logs.filter(l => l.id == id);
+        if(history.length === 0) tbody.innerHTML = '<tr><td colspan="4" class="p-4">لا يوجد سجل.</td></tr>';
+        else { history.forEach(l => { tbody.innerHTML += `<tr><td><b class="text-primary">${l.driver}</b></td><td><b class="text-success">${l.startDate}</b></td><td><b class="text-danger">${l.endDate}</b></td><td><b>${l.duration} يوم</b></td></tr>`; }); }
+        aModal.show();
+    }
+    
+    function deleteAccount(id) { if(confirm("حذف نهائي؟")) { accounts = accounts.filter(a => a.id != id); saveToCloud(); } }
+    function resetAllOrders() { if(confirm("تصفير الشهر؟")) { accounts.forEach(a => { a.dailyOrders = 0; a.totalOrders = 0; }); saveToCloud(); } }
+    function downloadPerfTemplate() { XLSX.writeFile(XLSX.utils.book_new(), "نموذج_الأداء.xlsx"); }
+    function downloadDriverTemplate() { XLSX.writeFile(XLSX.utils.book_new(), "نموذج_المستخدمين.xlsx"); }
+</script>
+</body>
+</html>
