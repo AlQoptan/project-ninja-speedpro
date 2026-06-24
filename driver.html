@@ -1,0 +1,445 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>بوابة المندوب — SpeedPro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+        * { font-family: 'Cairo', sans-serif; box-sizing: border-box; }
+
+        body {
+            background: linear-gradient(135deg,#0f0c29,#302b63,#24243e);
+            min-height:100vh; display:flex; align-items:center; justify-content:center; padding:1rem;
+            transition: background .3s;
+        }
+        body.portal-ready { background:#f1f5f9; align-items:flex-start; padding-top:1.25rem; }
+        body.driver-dark  { background:#0f172a !important; }
+        body.driver-dark.portal-ready { background:#0f172a !important; }
+
+        /* ── Login ── */
+        .portal-card {
+            background:rgba(255,255,255,.08); backdrop-filter:blur(20px);
+            border:1px solid rgba(255,255,255,.15); border-radius:24px;
+            padding:2.5rem; max-width:420px; width:100%;
+        }
+        .portal-logo { width:64px; height:64px; background:linear-gradient(135deg,#4361ee,#3a0ca3); border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:1.4rem; font-weight:900; color:#fff; margin:0 auto 1rem; }
+        .portal-title { color:#fff; font-size:1.5rem; font-weight:800; text-align:center; }
+        .portal-sub   { color:rgba(255,255,255,.6); font-size:.85rem; text-align:center; margin-bottom:1.5rem; }
+        .form-control-dark { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); color:#fff; border-radius:12px; }
+        .form-control-dark::placeholder { color:rgba(255,255,255,.4); }
+        .form-control-dark:focus { background:rgba(255,255,255,.15); border-color:#4361ee; box-shadow:0 0 0 3px rgba(67,97,238,.25); color:#fff; }
+        .btn-portal { background:linear-gradient(135deg,#4361ee,#3a0ca3); border:none; border-radius:12px; color:#fff; font-weight:700; padding:.75rem; font-size:1rem; transition:transform .15s; }
+        .btn-portal:hover { transform:translateY(-2px); color:#fff; }
+
+        /* ── Dashboard ── */
+        #driverDashboard { display:none; }
+        .dash-header { background:linear-gradient(135deg,#1e293b,#334155); border-radius:20px; padding:1.25rem 1.5rem; color:#fff; margin-bottom:1rem; }
+        .dash-header .platform-badge { background:rgba(255,255,255,.15); border-radius:20px; padding:.2rem .75rem; font-size:.8rem; }
+
+        /* ── Tabs ── */
+        .driver-tabs { display:flex; gap:.3rem; margin-bottom:1rem; background:#e2e8f0; padding:.35rem; border-radius:14px; overflow-x:auto; scrollbar-width:none; }
+        .driver-tabs::-webkit-scrollbar { display:none; }
+        .driver-tab { flex:0 0 auto; background:transparent; border:none; padding:.45rem .7rem; border-radius:10px; font-family:inherit; font-weight:700; font-size:.78rem; color:#64748b; cursor:pointer; transition:all .2s; white-space:nowrap; }
+        .driver-tab.active { background:#fff; color:#4361ee; box-shadow:0 2px 8px rgba(0,0,0,.12); }
+        .driver-tab:hover:not(.active) { background:rgba(67,97,238,.08); color:#4361ee; }
+
+        /* ── Cards ── */
+        .kpi-card  { background:#fff; border-radius:16px; padding:1rem; box-shadow:0 4px 20px rgba(0,0,0,.07); text-align:center; height:100%; }
+        .kpi-val   { font-size:2rem; font-weight:800; line-height:1; }
+        .kpi-label { font-size:.75rem; color:#64748b; margin-top:.3rem; }
+        .info-card { background:#fff; border-radius:16px; padding:1.25rem; box-shadow:0 4px 20px rgba(0,0,0,.07); margin-bottom:.85rem; }
+        .info-row  { display:flex; justify-content:space-between; align-items:center; padding:.45rem 0; border-bottom:1px solid #f1f5f9; }
+        .info-row:last-child { border-bottom:none; }
+
+        /* ── Status ── */
+        .status-pill  { border-radius:20px; padding:.2rem .9rem; font-weight:700; font-size:.82rem; }
+        .status-avail { background:#dcfce7; color:#16a34a; }
+        .status-used  { background:#dbeafe; color:#2563eb; }
+        .status-stop  { background:#fee2e2; color:#dc2626; }
+        .wallet-pos { color:#16a34a; }
+        .wallet-neg { color:#dc2626; }
+
+        /* ── Rating ── */
+        .rating-card { border-radius:16px; padding:1.25rem; margin-bottom:.85rem; color:#fff; position:relative; overflow:hidden; }
+        .rating-card::before { content:''; position:absolute; top:-40%; right:-20%; width:180px; height:180px; background:rgba(255,255,255,.08); border-radius:50%; }
+        .rating-badge-big { font-size:2.5rem; font-weight:900; line-height:1; }
+        .rating-bar { height:8px; border-radius:4px; background:rgba(255,255,255,.2); }
+        .rating-bar-fill { height:8px; border-radius:4px; background:#fff; transition:width .6s ease; }
+
+        /* ── Docs ── */
+        .doc-card { background:#fff; border-radius:14px; padding:1rem; box-shadow:0 2px 12px rgba(0,0,0,.06); border-right:4px solid #e2e8f0; }
+        .doc-card.valid    { border-right-color:#16a34a; }
+        .doc-card.expiring { border-right-color:#f59e0b; }
+        .doc-card.expired  { border-right-color:#dc2626; }
+        .doc-card.missing  { border-right-color:#94a3b8; }
+        .dsb { font-size:.72rem; font-weight:700; padding:.2rem .6rem; border-radius:8px; }
+        .dsb-valid    { background:#dcfce7; color:#16a34a; }
+        .dsb-expiring { background:#fef3c7; color:#d97706; }
+        .dsb-expired  { background:#fee2e2; color:#dc2626; }
+        .dsb-missing  { background:#f1f5f9; color:#64748b; }
+
+        /* ── Car ── */
+        .car-plate { font-size:1.8rem; font-weight:900; letter-spacing:2px; background:#1e293b; color:#fff; padding:.5rem 1.5rem; border-radius:12px; display:inline-block; font-family:monospace; }
+
+        /* ── Requests ── */
+        .req-card { background:#fff; border-radius:14px; padding:1.1rem; box-shadow:0 2px 12px rgba(0,0,0,.06); margin-bottom:.75rem; border-right:4px solid #4361ee; }
+        .req-card.advance-type { border-right-color:#f59e0b; }
+        .rsb-open     { background:#dbeafe; color:#2563eb; }
+        .rsb-closed   { background:#dcfce7; color:#16a34a; }
+        .rsb-pending  { background:#fef3c7; color:#d97706; }
+        .rsb-approved { background:#dcfce7; color:#16a34a; }
+        .rsb-rejected { background:#fee2e2; color:#dc2626; }
+
+        /* ── Salary ── */
+        .sal-card { background:#fff; border-radius:14px; padding:1rem; box-shadow:0 2px 10px rgba(0,0,0,.06); margin-bottom:.65rem; border-right:4px solid #16a34a; }
+        .sal-amount { font-size:1.4rem; font-weight:900; color:#16a34a; }
+        .sal-amount.neg { color:#dc2626; }
+        .sal-badge { font-size:.7rem; font-weight:700; padding:.15rem .55rem; border-radius:8px; }
+
+        /* ── Advance fields ── */
+        #advanceFields { background:rgba(245,158,11,.06); border:1px solid rgba(245,158,11,.25); border-radius:12px; padding:1rem; margin-bottom:.75rem; }
+
+        /* ── FAQ ── */
+        .faq-item { background:#fff; border-radius:14px; padding:1rem 1.1rem; margin-bottom:.6rem; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.05); border-right:3px solid #e2e8f0; transition:border-color .2s; }
+        .faq-item.open { border-right-color:#4361ee; }
+        .faq-q { font-weight:700; color:#1e293b; display:flex; justify-content:space-between; align-items:center; }
+        .faq-q::after { content:'＋'; font-size:1.1rem; color:#94a3b8; transition:transform .2s; }
+        .faq-item.open .faq-q::after { content:'－'; color:#4361ee; }
+        .faq-item.open .faq-q { color:#4361ee; }
+        .faq-a { font-size:.88rem; color:#64748b; margin-top:.5rem; display:none; line-height:1.7; }
+        .faq-item.open .faq-a { display:block; }
+
+        /* ── Announcement Banner ── */
+        #announceBanner { display:none; position:sticky; top:0; z-index:100; padding:.65rem 1rem; font-weight:700; font-size:.9rem; }
+
+        /* ── Dark Mode ── */
+        body.driver-dark .dash-header      { background:linear-gradient(135deg,#1e1b4b,#0f172a); }
+        body.driver-dark .driver-tabs       { background:#1e293b; }
+        body.driver-dark .driver-tab.active { background:#0f172a; }
+        body.driver-dark .kpi-card,
+        body.driver-dark .info-card,
+        body.driver-dark .doc-card,
+        body.driver-dark .req-card,
+        body.driver-dark .sal-card,
+        body.driver-dark .faq-item          { background:#1e293b; color:#e2e8f0; }
+        body.driver-dark .kpi-label         { color:#94a3b8; }
+        body.driver-dark .info-row          { border-color:#334155; }
+        body.driver-dark .faq-q             { color:#e2e8f0; }
+        body.driver-dark .faq-item.open .faq-q { color:#818cf8; }
+        body.driver-dark .faq-a             { color:#94a3b8; }
+        body.driver-dark .form-select,
+        body.driver-dark .form-control      { background:#1e293b; color:#e2e8f0; border-color:#334155; }
+        body.driver-dark .form-select option { background:#1e293b; }
+        body.driver-dark #advanceFields     { background:rgba(245,158,11,.08); }
+        body.driver-dark .text-muted        { color:#94a3b8 !important; }
+
+        @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+        .dtab-pane { animation:fadeIn .25s ease; }
+
+        @media(max-width:480px){
+            .kpi-val  { font-size:1.6rem; }
+            .dash-header { padding:1rem; }
+            .driver-tab { font-size:.7rem; padding:.4rem .55rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── Announcement Banner ── -->
+<div id="announceBanner"></div>
+
+<!-- ── Login ── -->
+<div id="loginView" class="portal-card">
+    <div class="portal-logo">SP</div>
+    <div class="portal-title">بوابة المندوب</div>
+    <div class="portal-sub">SpeedPro — سرعة المعالجة للخدمات اللوجستية</div>
+    <div class="mb-3">
+        <label class="text-white small fw-bold mb-1">📱 رقم الجوال</label>
+        <input type="tel" id="inputPhone" class="form-control form-control-dark form-control-lg" placeholder="05xxxxxxxx" dir="ltr">
+    </div>
+    <div class="mb-3">
+        <label class="text-white small fw-bold mb-1">🪪 رقم الهوية / الإقامة</label>
+        <input type="text" id="inputIqama" class="form-control form-control-dark form-control-lg" placeholder="1xxxxxxxxx" dir="ltr">
+    </div>
+    <div class="d-flex align-items-center mb-3">
+        <input type="checkbox" id="rememberMe" class="form-check-input me-2" style="width:18px;height:18px;cursor:pointer;accent-color:#4361ee;">
+        <label for="rememberMe" class="text-white small mb-0" style="cursor:pointer;opacity:.85;">تذكرني في هذا الجهاز</label>
+    </div>
+    <button class="btn btn-portal w-100" onclick="loginDriver()">
+        <i class="bi bi-box-arrow-in-left me-2"></i>دخول البوابة
+    </button>
+    <div id="loginError" class="text-danger text-center mt-3 fw-bold" style="display:none;"></div>
+</div>
+
+<!-- ── Dashboard ── -->
+<div id="driverDashboard" class="container pb-4" style="max-width:720px; display:none;">
+
+    <!-- Header -->
+    <div class="dash-header mb-3">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+            <div>
+                <div class="small opacity-60 mb-1">مرحباً بك 👋</div>
+                <div class="fs-4 fw-bold" id="driverName">—</div>
+                <div class="d-flex gap-2 mt-2 flex-wrap">
+                    <span class="platform-badge" id="driverPlatform">—</span>
+                    <span id="driverStatusBadge" class="status-pill status-avail">—</span>
+                </div>
+            </div>
+            <div class="d-flex flex-column align-items-end gap-2">
+                <div class="d-flex gap-1 flex-wrap justify-content-end">
+                    <button onclick="toggleLanguage()" class="btn btn-sm btn-outline-light" id="langBtn" title="Language" data-no-i18n><i class="bi bi-globe2 me-1"></i><span id="langBtnText">EN</span></button>
+                    <button onclick="toggleDarkMode()" class="btn btn-sm btn-outline-light" id="darkModeBtn" title="وضع ليلي"><i class="bi bi-moon-stars"></i></button>
+                    <button onclick="shareMyData()" class="btn btn-sm btn-outline-light" title="مشاركة"><i class="bi bi-share"></i></button>
+                    <button onclick="printMyData()" class="btn btn-sm btn-outline-light" title="طباعة"><i class="bi bi-printer"></i></button>
+                    <button onclick="logoutDriver()" class="btn btn-sm btn-outline-light"><i class="bi bi-box-arrow-right me-1"></i>خروج</button>
+                </div>
+                <div class="text-end">
+                    <div class="small opacity-60">رقم الموظف</div>
+                    <div class="fw-bold fs-6" id="driverEmpNum">—</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Welcome -->
+    <div id="welcomeMsg" class="info-card mb-3 text-center fw-bold" style="display:none; background:linear-gradient(135deg,rgba(67,97,238,.08),rgba(58,12,163,.06)); border:1px solid rgba(67,97,238,.2); color:#3a0ca3;"></div>
+
+    <!-- Tabs -->
+    <div class="driver-tabs mb-3">
+        <button class="driver-tab active" id="dtabBtn_home"     onclick="switchDriverTab('home')">🏠 الرئيسية</button>
+        <button class="driver-tab"        id="dtabBtn_docs"     onclick="switchDriverTab('docs')">📄 وثائقي</button>
+        <button class="driver-tab"        id="dtabBtn_car"      onclick="switchDriverTab('car')">🚗 سيارتي</button>
+        <button class="driver-tab"        id="dtabBtn_requests" onclick="switchDriverTab('requests')">💬 طلباتي</button>
+        <button class="driver-tab"        id="dtabBtn_salary"   onclick="switchDriverTab('salary')">💰 راتبي</button>
+        <button class="driver-tab"        id="dtabBtn_help"     onclick="switchDriverTab('help')">❓ مساعدة</button>
+    </div>
+
+    <!-- ═══ HOME ═══ -->
+    <div id="dtab_home" class="dtab-pane">
+        <div class="row g-2 mb-3">
+            <div class="col-6 col-md-3"><div class="kpi-card"><div class="kpi-val text-danger" id="kpiDaily">0</div><div class="kpi-label">طلبات اليوم</div></div></div>
+            <div class="col-6 col-md-3"><div class="kpi-card"><div class="kpi-val text-primary" id="kpiTotal">0</div><div class="kpi-label">التراكمي الكلي</div></div></div>
+            <div class="col-6 col-md-3"><div class="kpi-card"><div class="kpi-val text-success" id="kpiHours">0</div><div class="kpi-label">ساعات العمل</div></div></div>
+            <div class="col-6 col-md-3"><div class="kpi-card"><div class="kpi-val" id="kpiWallet">0</div><div class="kpi-label">رصيد المحفظة</div></div></div>
+        </div>
+
+        <div id="ratingCard" class="rating-card mb-3"></div>
+
+        <div class="info-card mb-3">
+            <h6 class="fw-bold mb-3"><i class="bi bi-bar-chart-fill me-2 text-primary"></i>الأداء اليومي</h6>
+            <div class="d-flex gap-3 align-items-center">
+                <div style="width:120px;height:120px;flex-shrink:0;"><canvas id="perfChart"></canvas></div>
+                <div class="flex-grow-1" id="chartLegend"></div>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <h6 class="fw-bold text-primary mb-2"><i class="bi bi-person-badge me-2"></i>بياناتي</h6>
+            <div class="info-row"><span class="text-muted">المالك / المشغّل</span><b id="infoOwner">—</b></div>
+            <div class="info-row" id="infoSuperRow"><span class="text-muted">المشرف الميداني</span><b id="infoSupervisor">—</b></div>
+            <div class="info-row"><span class="text-muted">تاريخ الاستلام</span><b id="infoDate">—</b></div>
+            <div class="info-row"><span class="text-muted">المنصة</span><b id="infoPlatform">—</b></div>
+        </div>
+
+        <div class="info-card" id="notesCard" style="display:none;">
+            <h6 class="fw-bold text-warning mb-2"><i class="bi bi-sticky me-2"></i>ملاحظات المشرف</h6>
+            <p class="mb-0 text-muted" id="infoNotes"></p>
+        </div>
+    </div>
+
+    <!-- ═══ DOCS ═══ -->
+    <div id="dtab_docs" class="dtab-pane" style="display:none;">
+        <div id="docsExpiryAlert" style="display:none;"></div>
+        <div class="info-card mb-3" style="background:linear-gradient(135deg,rgba(124,58,237,.06),rgba(67,97,238,.04)); border:1px solid rgba(124,58,237,.12);">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-info-circle text-primary fs-5"></i>
+                <small class="text-muted">الوثائق المسجّلة في النظام — تواصل مع مشرفك لتحديث أي وثيقة</small>
+            </div>
+        </div>
+        <div class="row g-2" id="docsGrid">
+            <div class="col-12 text-center text-muted py-4"><div class="spinner-border spinner-border-sm me-2"></div>جاري التحميل...</div>
+        </div>
+    </div>
+
+    <!-- ═══ CAR ═══ -->
+    <div id="dtab_car" class="dtab-pane" style="display:none;">
+        <div id="carContent">
+            <div class="text-center text-muted py-5"><div class="spinner-border spinner-border-sm me-2"></div>جاري البحث...</div>
+        </div>
+    </div>
+
+    <!-- ═══ REQUESTS ═══ -->
+    <div id="dtab_requests" class="dtab-pane" style="display:none;">
+        <div class="info-card mb-3">
+            <h6 class="fw-bold mb-3"><i class="bi bi-send me-2 text-primary"></i>إرسال طلب جديد</h6>
+
+            <div class="mb-2">
+                <label class="small fw-bold text-muted mb-1">نوع الطلب</label>
+                <select id="reqType" class="form-select" onchange="toggleAdvanceFields()">
+                    <option value="إجازة">🏖️ طلب إجازة</option>
+                    <option value="سلفة">💵 طلب سلفة</option>
+                    <option value="مشكلة">⚠️ الإبلاغ عن مشكلة</option>
+                    <option value="استفسار">❓ استفسار</option>
+                    <option value="شكوى">📋 شكوى</option>
+                    <option value="أخرى">📌 أخرى</option>
+                </select>
+            </div>
+
+            <!-- Advance Extra Fields -->
+            <div id="advanceFields" style="display:none;" class="mb-2">
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <label class="small fw-bold mb-1">💰 المبلغ المطلوب (ريال)</label>
+                        <input type="number" id="advanceAmount" class="form-control" placeholder="مثال: 500" min="1">
+                    </div>
+                    <div class="col-6">
+                        <label class="small fw-bold mb-1">📅 تاريخ الحاجة</label>
+                        <input type="date" id="advanceDate" class="form-control">
+                    </div>
+                </div>
+                <label class="small fw-bold mb-1">📝 سبب طلب السلفة</label>
+                <textarea id="advanceReason" class="form-control" rows="2" placeholder="اذكر سبب احتياجك للسلفة..."></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label class="small fw-bold text-muted mb-1" id="reqMsgLabel">تفاصيل الطلب</label>
+                <textarea id="reqMsg" class="form-control" rows="3" placeholder="اكتب تفاصيل طلبك هنا..."></textarea>
+            </div>
+            <button onclick="submitRequest()" class="btn btn-primary fw-bold w-100" id="submitReqBtn">
+                <i class="bi bi-send-fill me-2"></i>إرسال الطلب
+            </button>
+        </div>
+
+        <h6 class="fw-bold text-muted mb-2"><i class="bi bi-clock-history me-2"></i>طلباتي السابقة</h6>
+        <div id="myRequestsList">
+            <div class="text-center text-muted py-3"><div class="spinner-border spinner-border-sm me-2"></div>جاري التحميل...</div>
+        </div>
+    </div>
+
+    <!-- ═══ SALARY ═══ -->
+    <div id="dtab_salary" class="dtab-pane" style="display:none;">
+        <div class="info-card mb-3" style="background:linear-gradient(135deg,rgba(22,163,74,.07),rgba(16,185,129,.04)); border:1px solid rgba(22,163,74,.2);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="small text-muted mb-1">إجمالي ما استلمته</div>
+                    <div class="fw-bold fs-3 text-success" id="salaryTotal">0 ريال</div>
+                </div>
+                <i class="bi bi-cash-stack fs-1 opacity-25 text-success"></i>
+            </div>
+        </div>
+        <h6 class="fw-bold text-muted mb-2"><i class="bi bi-list-ol me-2"></i>سجل الرواتب والمستحقات</h6>
+        <div id="salaryList">
+            <div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm me-2"></div>جاري التحميل...</div>
+        </div>
+    </div>
+
+    <!-- ═══ HELP ═══ -->
+    <div id="dtab_help" class="dtab-pane" style="display:none;">
+        <div class="info-card mb-3" style="background:linear-gradient(135deg,rgba(67,97,238,.07),rgba(58,12,163,.04)); border:1px solid rgba(67,97,238,.15);">
+            <div class="d-flex align-items-center gap-3">
+                <i class="bi bi-headset fs-2 text-primary"></i>
+                <div>
+                    <div class="fw-bold">هل تحتاج مساعدة؟</div>
+                    <div class="small text-muted">تواصل مع مشرفك أو أرسل طلب من تبويب "طلباتي"</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-card mb-3">
+            <h6 class="fw-bold text-danger mb-3"><i class="bi bi-telephone-fill me-2"></i>أرقام التواصل</h6>
+            <div class="info-row">
+                <span class="text-muted">الدعم الفني</span>
+                <a href="tel:+966500000000" class="btn btn-sm btn-outline-success fw-bold"><i class="bi bi-telephone me-1"></i>اتصال</a>
+            </div>
+            <div class="info-row">
+                <span class="text-muted">واتساب الإدارة</span>
+                <a href="https://wa.me/966500000000" target="_blank" class="btn btn-sm btn-outline-success fw-bold"><i class="bi bi-whatsapp me-1"></i>واتساب</a>
+            </div>
+            <div class="info-row">
+                <span class="text-muted">إرسال طلب رسمي</span>
+                <button onclick="switchDriverTab('requests')" class="btn btn-sm btn-primary fw-bold"><i class="bi bi-send me-1"></i>إرسال طلب</button>
+            </div>
+        </div>
+
+        <h6 class="fw-bold text-muted mb-2"><i class="bi bi-question-circle me-2"></i>أسئلة شائعة</h6>
+        <div id="faqList">
+            <div class="faq-item" onclick="this.classList.toggle('open')">
+                <div class="faq-q">كيف أحدّث وثائقي؟</div>
+                <div class="faq-a">تواصل مع مشرفك الميداني وأرسل له نسخة من الوثيقة المحدّثة. سيقوم بتحديثها في النظام خلال 24 ساعة.</div>
+            </div>
+            <div class="faq-item" onclick="this.classList.toggle('open')">
+                <div class="faq-q">كيف أطلب سلفة؟</div>
+                <div class="faq-a">اذهب لتبويب "طلباتي" واختر "طلب سلفة"، ثم أدخل المبلغ المطلوب وتاريخ الحاجة والسبب. ستُراجع الطلب الإدارة خلال يوم عمل.</div>
+            </div>
+            <div class="faq-item" onclick="this.classList.toggle('open')">
+                <div class="faq-q">ماذا أفعل إذا كانت السيارة تعاني من عطل؟</div>
+                <div class="faq-a">أرسل طلب "الإبلاغ عن مشكلة" من تبويب طلباتي مع وصف تفصيلي للعطل. في حالات الطوارئ اتصل برقم التواصل أعلاه مباشرة.</div>
+            </div>
+            <div class="faq-item" onclick="this.classList.toggle('open')">
+                <div class="faq-q">متى يُصرف الراتب؟</div>
+                <div class="faq-a">يُصرف الراتب في بداية كل شهر ميلادي. يمكنك متابعة سجل الرواتب من تبويب "راتبي".</div>
+            </div>
+            <div class="faq-item" onclick="this.classList.toggle('open')">
+                <div class="faq-q">كيف يُحسب تقييمي؟</div>
+                <div class="faq-a">التقييم بناءً على إجمالي الطلبات التراكمية: A+ (150+ طلب) — A (100-149) — B (50-99) — C (أقل من 50). يظهر تقييمك في الصفحة الرئيسية.</div>
+            </div>
+            <div class="faq-item" onclick="this.classList.toggle('open')">
+                <div class="faq-q">كيف أطلب إجازة؟</div>
+                <div class="faq-a">من تبويب "طلباتي" اختر "طلب إجازة" واكتب تواريخ الإجازة والسبب. ستصلك إجابة المشرف خلال يوم عمل.</div>
+            </div>
+            <div class="faq-item" onclick="this.classList.toggle('open')">
+                <div class="faq-q">لماذا لا تظهر بعض بياناتي؟</div>
+                <div class="faq-a">قد يكون المشرف أخفى بعض الحقول. تواصل معه إذا كنت تعتقد أن هناك خطأ في بياناتك.</div>
+            </div>
+            <div class="faq-item" onclick="this.classList.toggle('open')">
+                <div class="faq-q">كيف أستخدم الوضع الليلي؟</div>
+                <div class="faq-a">اضغط على أيقونة القمر 🌙 في الأعلى يميناً لتفعيل الوضع الليلي. سيحفظ النظام تفضيلك تلقائياً.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center text-muted small mt-4 pb-2">
+        <i class="bi bi-shield-check me-1"></i>بوابة القراءة فقط — SpeedPro &copy; 2025
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="driver.js"></script>
+<script src="i18n_auto.obfuscated.js"></script>
+<script>
+// Minimal bilingual bootstrap for the driver portal (shares app_lang with the main app)
+(function () {
+  window.currentLang = localStorage.getItem('app_lang') || 'ar';
+  function apply(lang) {
+    window.currentLang = lang;
+    localStorage.setItem('app_lang', lang);
+    var html = document.documentElement;
+    html.lang = lang;
+    html.dir  = (lang === 'en') ? 'ltr' : 'rtl';
+    var t = document.getElementById('langBtnText');
+    if (t) t.textContent = (lang === 'en') ? 'ع' : 'EN';
+    if (typeof autoTranslatePage === 'function') autoTranslatePage(lang);
+  }
+  window.toggleLanguage = function () { apply(window.currentLang === 'ar' ? 'en' : 'ar'); };
+  document.addEventListener('DOMContentLoaded', function () {
+    var t = document.getElementById('langBtnText');
+    if (t) t.textContent = (window.currentLang === 'en') ? 'ع' : 'EN';
+    if (window.currentLang === 'en') {
+      document.documentElement.lang = 'en';
+      document.documentElement.dir  = 'ltr';
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

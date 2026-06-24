@@ -1,0 +1,12 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+    "ninja_data": {
+      "portal_requests":      { ".indexOn": ["ts", "driverId"] },
+      "portal_activity":      { ".indexOn": ["ts"] },
+      "portal_announcements": { ".indexOn": ["ts"] },
+      "alerts":               { ".indexOn": ["accountId"] }
+    }
+  }
+}
